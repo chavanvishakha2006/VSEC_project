@@ -1,0 +1,34 @@
+# Python / Virtual Environment
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Testing & Jupyter
+.pytest_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# Datasets & Large Files (DO NOT COMMIT REAL DATASETS)
+data/*.csv
+!data/.gitkeep
+
+# Model Artifacts (Generated during training)
+models/*.pkl
+models/*.json
+!models/.gitkeep
+
+# Environment & Secrets
+.env
+.env.local
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
