@@ -1,12 +1,81 @@
-# Credit Card / ATM Fraud Detection
+# VSEC Fraud Detection Project
 
-A Streamlit machine-learning demo for exploring synthetic transaction risk. It includes an overview dashboard, an individual transaction scorer, model comparison, and analytics.
+This project is a Streamlit-based fraud detection system for analyzing transaction risk and flagging suspicious activity. It combines a clean ML workflow, interactive dashboarding, and model comparison tools for practical monitoring and decision support.
 
-> **Data notice:** Synthetic data is generated locally by default. The project also accepts the standard 284,807-row `Time`, `Amount`, `V1`–`V28`, `Class` CSV and transaction-record CSVs with `TransactionDate`, `Amount`, `MerchantID`, `TransactionType`, `Location`, `IsFraud`. The standard dataset can be downloaded from [Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud); it is not bundled here. Synthetic model scores are educational examples, not evidence of production performance.
+## Overview
 
-## Run locally
+The application helps a team review transaction behavior, identify likely fraud, and compare multiple machine-learning models using a single dataset. It supports:
 
-Use Python 3.10 or newer. From the project root, create and activate a virtual environment, then install dependencies:
+- Dashboard summaries of fraud trends and operational KPIs
+- Manual transaction risk prediction from user-entered data
+- Model performance comparison across multiple algorithms
+- Analytics for investigation and review
+- Dataset/model management via the app UI
+
+## Included functionality
+
+- Synthetic and real transaction dataset support
+- Transaction feature normalization and validation
+- Model training with class balancing and leakage-safe setup
+- Evaluation metrics including accuracy, precision, recall, F1, ROC-AUC, and PR-AUC
+- Confusion matrices and feature importance review
+- Streamlit pages for dashboard, prediction, analytics, and model comparison
+
+## Tech stack
+
+- Python 3.10+
+- Streamlit
+- pandas
+- scikit-learn
+- XGBoost
+- Plotly
+- joblib
+
+## Project structure
+
+```text
+app.py                          Streamlit application
+src/
+  data.py                       Transaction validation and synthetic data generation
+  modeling.py                   ML training, evaluation, and model bundle creation
+scripts/
+  prepare_demo.py               Script to prepare dataset and train models
+models/
+  model_bundle.joblib           Trained model bundle (generated locally)
+data/
+  credit_card_fraud_full_training_dataset.csv
+requirements.txt                Python dependencies
+tests/
+  test_project.py               Validation tests
+Dockerfile                      Containerized app setup
+render.yaml                     Render deployment configuration
+.github/workflows/             CI and deployment automation
+README.md                      Project documentation
+```
+
+## Dataset and schema
+
+The app expects transaction records that include fields such as:
+
+- `year`
+- `month`
+- `day`
+- `time`
+- `card_network`
+- `payment_method`
+- `category`
+- `mcc`
+- `amount`
+- `is_foreign`
+- `days_since_last_transaction`
+- `transaction_amount_delta`
+- `is_fraud`
+
+The project can generate a synthetic sample automatically if no dataset is found, and it also accepts a CSV that matches the supported fraud-detection schema.
+
+## Local setup
+
+Create a virtual environment and install dependencies:
 
 ```powershell
 py -m venv .venv
@@ -14,60 +83,52 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Prepare a quick 20,000-row synthetic dataset and train the comparison models:
+Prepare the dataset and train the ML models:
 
 ```powershell
 python -m scripts.prepare_demo
 ```
 
-Start the application:
+Start the app:
 
 ```powershell
 streamlit run app.py
 ```
 
-The app also offers a first-run setup button if the dataset and model bundle are missing. The **Data & Models** page accepts either supported CSV schema, validates it, then retrains all four models. Your `data/credit_card_fraud_dataset.csv` is supported directly; load and train it from PowerShell with `python -m scripts.prepare_demo --input data/credit_card_fraud_dataset.csv`. For transaction-record data, the app engineers model features from date/time, amount, merchant ID, transaction type, and location, and maps `IsFraud` to `Class` in memory. The original CSV is used directly and remains unchanged; the model-ready conversion is not written as a second CSV. Full-size training takes longer and requires more memory. To approximate the standard dataset row count with synthetic data, use `python -m scripts.prepare_demo --rows 284807`.
-
-## What is included
-
-- Imbalanced synthetic transaction generation with `Time`, `Amount`, `V1`–`V28`, and binary `Class` columns.
-- Class-weighted Logistic Regression, calibrated linear SVM, Random Forest, and XGBoost models, evaluated on a stratified holdout split.
-- Accuracy, precision, recall, F1, ROC-AUC, PR-AUC, confusion matrices, and model feature importance.
-- Cached Streamlit views for dashboard KPIs, manual predictions, comparisons, and downloadable filtered analytics.
-- Docker image, GitHub Actions tests, and an optional Render deploy-hook workflow.
-- Tests for deterministic generation, schema validation, and invalid input handling.
-
-The trained model bundle (`models/model_bundle.joblib`) is excluded from version control. The app uses one dataset CSV at `data/credit_card_fraud_dataset.csv`.
-
-## Test
+## Running tests
 
 ```powershell
 pytest
 ```
 
-## Docker
+## Model information
+
+The training pipeline evaluates several models:
+
+- Logistic Regression
+- Linear SVM
+- Random Forest
+- XGBoost
+
+The best model is selected based on PR-AUC, and the trained bundle is saved to `models/model_bundle.joblib`.
+
+## Deployment
+
+The repository includes Docker and Render configuration files for deployment. A Docker image can be built with:
 
 ```powershell
-docker build -t fraud-detection-demo .
-docker run --rm -p 8501:8501 fraud-detection-demo
+docker build -t vsec-fraud-detection .
+docker run --rm -p 8501:8501 vsec-fraud-detection
 ```
 
-Then open `http://localhost:8501` in a browser. The image prepares a small synthetic sample during build.
-
-## Deploy
-
-The included `render.yaml` describes a Render web service. Connect the repository in Render and deploy from the blueprint. The Docker build installs `requirements.txt` and prepares a 12,000-row synthetic sample; the start command launches Streamlit on Render's assigned port. To trigger deployment from GitHub Actions on pushes to `main`, add the Render service deploy-hook URL as the repository secret `RENDER_DEPLOY_HOOK`. The workflow skips deployment when the secret is absent. Uploaded datasets are stored in the app container's local filesystem; on free ephemeral hosting, re-upload after a redeploy or restart.
-
-## Project layout
+Then open:
 
 ```text
-app.py                         Streamlit interface
-src/data.py                    Synthetic data generation and validation
-src/modeling.py                Training, evaluation, and serialization
-scripts/prepare_demo.py        Reproducible data/model preparation command
-tests/test_project.py          Focused unit tests
-.github/workflows/ci.yml       Test workflow
-.github/workflows/deploy.yml   Optional Render deploy-hook workflow
-Dockerfile                     Container deployment
-render.yaml                    Render deployment blueprint
+http://localhost:8501
 ```
+
+## Notes
+
+- Generated model files and datasets are local artifacts and can be reproduced by running the training script.
+- This project is intended for educational and operational demonstration use, not for regulatory or production-only fraud decisioning without further validation.
+
